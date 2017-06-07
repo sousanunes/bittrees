@@ -1,0 +1,17 @@
+# Compiled source #
+###################
+*.exe
+*.o
+
+# Path to binaries #
+####################
+bin/
+build/
+
+# Path to trees files #
+#######################
+tree/
+
+# Scons temporary database #
+############################
+.sconsign.dblite
