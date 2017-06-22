@@ -31,13 +31,10 @@ node [shape=oval];
 9 [colorscheme=rdylgn8, fontsize=9, label=" 90", color=lightblue,style=filled ];
 node [shape=oval];
 13 [colorscheme=rdylgn8, fontsize=9, label=" 130", color=lightblue,style=filled ];
-13 -> 26;
 node [shape=oval];
 15 [colorscheme=rdylgn8, fontsize=9, label=" 150", color=lightblue,style=filled ];
 node [shape=oval];
 16 [colorscheme=rdylgn8, fontsize=9, label=" 160", color=lightblue,style=filled ];
 node [shape=oval];
 17 [colorscheme=rdylgn8, fontsize=9, label=" 170", color=lightblue,style=filled ];
-node [shape=oval];
-26 [colorscheme=rdylgn8, fontsize=9, label=" 1000", color=lightblue,style=filled ];
 }

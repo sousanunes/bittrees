@@ -1,39 +1,59 @@
 #include "BitTree.h"
+#include "Logger.h"
 #include <math.h>
 #include <iostream>
 #include <fstream>
+
+using namespace std;
 
 /**********
 * PRIVATE *
 ***********/
 
-void BitTree::print(std::ostream& out, const std::string& prefix, int key) const
+std::string BitTree::print(const std::string& prefix, unsigned int key) const
 {
-	std::string toAdd;
+	if ( this->isEmpty() ) return prefix + "{}";
+
+	std::string toPrint(prefix + std::to_string(key));
+	std::string out;
+
 	if ( this->hasKey(key) )
 		{
-			out << prefix;
-			std::string toPrint(std::to_string(key) + ": " + std::to_string(this->getValue(key)) + " ");
-			out << toPrint << std::endl;
+			// Print current key and action
+			toPrint += ": " + std::to_string(this->getValue(key));
+			out += toPrint + "\n";
 
-			for (unsigned int j(0); j<(toPrint.size()/2 - 1); j++) toAdd += " ";
-			toAdd += "|    ";
+			std::string toAdd;
+			for (unsigned int j(0); j<(toPrint.size()/2 - 3); j++) toAdd += " ";
+			toAdd += "|   ";
+
+			// Print left child
+			out += this->print(prefix + toAdd, BitTree::getLeftChildKey(key));
+			
+			// Print right child
+			out += this->print(prefix + toAdd, BitTree::getRightChildKey(key));
+
+			return out;
 		}
 
-	if ( this->hasKey(BitTree::getLeftChildKey(key)) )
-		this->print(out, prefix + toAdd, BitTree::getLeftChildKey(key));
-	
-	if ( this->hasKey(BitTree::getRightChildKey(key)) )
-		this->print(out, prefix + toAdd, BitTree::getRightChildKey(key));
+
+	// Print current key without action
+	out += toPrint + "\n";
+	return out;
 }
+
+/* Private iterators */
+std::map<unsigned int, unsigned int>::const_iterator BitTree::nodes_cbegin() const { return this->nodes.cbegin(); }
+std::map<unsigned int, unsigned int>::const_iterator BitTree::nodes_cend()	 const { return this->nodes.cend(); }
 
 /*********
 * PUBLIC *
 **********/
+BitTree::BitTree(const BitTree& bitTree) { this->nodes.insert(bitTree.nodes_cbegin(), bitTree.nodes_cend()); }
 
 /* Setters */
-void BitTree::addRoot(int value){ this->nodes[1] = value; }
-void BitTree::addLeftChild(int parentKey,	int value)
+void BitTree::addRoot(unsigned int value){ this->nodes[1] = value; }
+void BitTree::addLeftChild(unsigned int parentKey,	unsigned int value)
 {
 	if ( this->hasKey(parentKey) )
 		{
@@ -41,7 +61,7 @@ void BitTree::addLeftChild(int parentKey,	int value)
 			return;
 		}
 }
-void BitTree::addRightChild(int parentKey,	int value)
+void BitTree::addRightChild(unsigned int parentKey,	unsigned int value)
 {
 	if ( this->hasKey(parentKey) )
 		{
@@ -51,31 +71,42 @@ void BitTree::addRightChild(int parentKey,	int value)
 }
 
 /* Getters */
-bool BitTree::hasKey(int key) const { return this->nodes.find(key) != this->nodes.cend(); }
-int BitTree::getValue(int key) const
+bool BitTree::hasKey(unsigned int key) const { return this->nodes.find(key) != this->nodes.cend(); }
+unsigned int BitTree::getValue(unsigned int key) const
 {
 	if ( this->hasKey(key) )
 		return this->nodes.find(key)->second;
-	return -1;
+	return 0;
 }
-int BitTree::getNumberNodes() const { return this->nodes.size(); }
-int BitTree::getMaxLevel() const
+unsigned int BitTree::getNumberNodes() const { return this->nodes.size(); }
+unsigned int BitTree::getMaxLevel() const
 {
 	if (this->getNumberNodes() == 0)
 		return -1;
 	return log2(this->nodes.rbegin()->first);
 }
-
+bool BitTree::isEmpty() const { return this->getNumberNodes() == 0; }
 
 /* Static */
-
-int BitTree::getLevel(int key)
+unsigned int BitTree::getLevel(unsigned int key)
 {
 	if ( key < 1 ) return -1;
 	else return log2(key);
 }
-int BitTree::getLeftChildKey(int key) { return (key << 1); }
-int BitTree::getRightChildKey(int key) { return (key << 1) | 1; }
+unsigned int BitTree::getParentKey(unsigned int key) { return (key >> 1); }
+unsigned int BitTree::getChildKey(unsigned int key, unsigned int childIndex)
+{
+	if ( !(childIndex>>1) ) return (key<<1) | childIndex;
+	Logger::error("Invalid input childIndex at BitTree::getChildKey(). Should be either 0 or 1.");
+	throw("Invalid input childIndex at BitTree::getChildKey(). Should be either 0 or 1.");
+}
+
+unsigned int BitTree::isRoot(unsigned int key)		{ return (key == 1); }
+unsigned int BitTree::isLeftChild(unsigned int key)	{ return  (key & 1); }
+unsigned int BitTree::isRightChild(unsigned int key)	{ return !(key & 1); }
+
+unsigned int BitTree::getLeftChildKey(unsigned int key) { return (key << 1); }
+unsigned int BitTree::getRightChildKey(unsigned int key) { return (key << 1) | 1; }
 
 std::string BitTree::toDot(const std::string& filename) const
 {
@@ -83,9 +114,9 @@ std::string BitTree::toDot(const std::string& filename) const
 	file.open(filename);
 	file << "digraph Tree {\n";
 
-	int leftChildKey, rightChildKey;
+	unsigned int leftChildKey, rightChildKey;
 
-	for ( std::map<int, int>::const_iterator it(this->nodes.cbegin()); it != this->nodes.cend(); it++ )
+	for ( std::map<unsigned int, unsigned int>::const_iterator it(this->nodes.cbegin()); it != this->nodes.cend(); it++ )
 	{
 		if ( this->hasKey(it->first) )
 			{
@@ -121,8 +152,9 @@ std::string BitTree::toDot(const std::string& filename) const
 	return filename;
 }
 
+std::string BitTree::print(const std::string& prefix) const { return "\n" + this->print(prefix, 1); }
 std::ostream& operator<< (std::ostream& out, const BitTree& bt)
 {
-	bt.print(out, "", 1);
+	out << bt.print("", 1);
 	return out;
 }
